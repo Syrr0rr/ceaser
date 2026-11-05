@@ -1,5 +1,6 @@
 def print_start():
-    '''confirms user input and returns 1,2 or 3'''
+    '''prints starting menu
+    '''
     print("""
     CAESAR CIPHER MESSAGING
 
@@ -10,23 +11,14 @@ def print_start():
     2. Read and reply to a message
 
     3. Quit """)
-
 #DEBUG TOOLS-----------------------------------------------------------------------------------
-
 def reset_file():
-    '''debug tool'''
+    '''resets conversation file (h)'''
     file_name = input("File location (RESET)")
     file_path = f"Encrypted_stuff/{file_name}.txt"
     with open(file_path, "w") as file: #w overwrites
         file.write("")
-def sendtofile(text):
-    '''create message in file h without input (debug tool)'''
-    file_path = f"Encrypted_stuff/h.txt"
-    with open(file_path, "a") as file: #appends text every time 
-        file.write(text) 
-
-#CONFIRMATION-------------------------------------------------------------------
-
+#CONFIRMATION------------------------------------------------------------------------------------
 def is_integer_string(s):
     '''returns true for negative and postive numbers, false for anything that cant be converted to int'''
     try:
@@ -36,6 +28,7 @@ def is_integer_string(s):
         return False
 
 def get_valid_start_input():
+    '''gets valid start input '''
     while True:
         u_input = input("Enter your choice: ")
         if not u_input.isdigit():
@@ -47,6 +40,7 @@ def get_valid_start_input():
         print("Error, try again")
 
 def get_digit(phrase):
+    '''checks if a number can be an integer'''
     num = input(phrase)
     result = is_integer_string(num)
     while result == False:
@@ -55,121 +49,75 @@ def get_digit(phrase):
         result = is_integer_string(num)
     num = int(num)
     return num
-
-#ENCRYPTION CODE --------------------------------------------------------------
-# def start_crypt(shift): #maybe store in a list or if not a string
-#     encypted = []
-#     supported_characters = list(input("Enter support characters in order (Alphabet or numbers, NO REPEATS): ")) #ABCDEFGHIJKLMNOPQRSTUVWXYZ
-#     #NOTE ^put this in sep fucntion, make it an argument in this one 
-#     shifted_characters = supported_characters[shift:] + supported_characters[:shift]
-#     message =  list(input("Message"))
-#     for letter in message: 
-#         if letter not in supported_characters:
-#             letter = "?"
-#             encypted.append(letter) #just appends letters in list to encrypted
-#         else:
-#             crypt_letter = supported_characters.index(letter)   #finds the h in encypted not normal list
-#             encypted.append(shifted_characters[crypt_letter]) #just appends letters in list to encrypted
-#     print(shifted_characters)
-#     print(encypted)
-#     str_encrypted = "".join(encypted)
-#     sendtofile("".join(supported_characters))
-#     sendtofile(f"\n{shift}")
-#     return str_encrypted
-
-
-def encrypt(): #need to add first option 
-    encypted = []
-    with open(f"Encrypted_stuff/h.txt", "r") as file:
-            lines = file.readlines()
-            supported_characters = lines[0]
-            shift = int(lines[1]) * -1
-            message = lines[-1] 
-
+#ENCRYPTION CODE ---------------------------------------------------------------------------------
+def encrypt(message, supported_characters, shift):
+    '''the code that actually encrypts/decrypts the messages'''
+    encrypted = []
+    shift = shift % len(supported_characters)  # wrap the shift
     shifted_characters = supported_characters[shift:] + supported_characters[:shift]
     for letter in message:
         if letter not in supported_characters:
-            encypted.append("?")
+            encrypted.append("?")
         else:
             crypt_letter = supported_characters.index(letter)
-            encypted.append(shifted_characters[crypt_letter])
+            encrypted.append(shifted_characters[crypt_letter])
 
-    print(shifted_characters)
-    print(encypted)
-    return "".join(encypted)
+    return "".join(encrypted)
+#FILE HANDLING--------------------------------------------------------------------------------------
+def create_message():
+    '''Resets the conversation file and asks for the first message to be sent to the folder'''
+    supported_characters = input("Enter supported characters: ")
+    shift = get_digit("Enter shift: ")
+    message = input("Message: ")
 
-#FILE HANDLING----------------------------------------------------------------------
-def create_message(text):
-    '''appends crypted text to the conversation file, location of file is set by user'''
-    file_name = input("Name of file to send text to (h): ")
+    encrypted_message = encrypt(message, supported_characters, shift)
+
+    file_name = input("Name of file: ")
     file_path = f"Encrypted_stuff/{file_name}.txt"
-    with open(file_path, "a") as file: 
-        file.write(text) 
 
-# def decrypt():
-#     encypted = []
-#     file_name = input("File name")
-#     with open(f"Encrypted_stuff/{file_name}.txt", "r") as file:
-#         lines = file.readlines()
-#         supported_characters = lines[0]
-#         shift = int(lines[1]) * -1
-#         messages = lines[-2:] 
-#     shifted_characters = supported_characters[shift:] + supported_characters[:shift]
-    
-#     for letter in messages: 
-#         if letter not in supported_characters:
-#             letter = "?"
-#             encypted.append(letter) #just appends letters in list to encrypted
-#         else:
-#             crypt_letter = supported_characters.index(letter) 
-#             encypted.append(shifted_characters[crypt_letter]) #just appends letters in list to encrypted
-#     print(f"{shifted_characters} SHIFTED CHARACTERS")
-#     print(f"{encypted} ENCRYPTED")
-#     str_encrypted = "".join(encypted)
-#     sendtofile("".join(supported_characters))
-#     sendtofile(f"\n{shift}")
-#     return str_encrypted
-    
+    with open(file_path, "w") as file:
+        file.write(supported_characters + "\n")
+        file.write(str(shift) + "\n")
+        file.write(encrypted_message + "\n")
+
+    print("Encrypted message:", encrypted_message)
+    print("Message saved!")
 
 def reply2message():
-    file_name = input("File name")
-    r = True
-    while r: #repeats until it can open file 
+    '''lets the user see the last two messages and asks for a reply to tho'''
+    file_name = input("File name: ")
+    while True: #repeats until it can open file
         try:
             with open(f"Encrypted_stuff/{file_name}.txt", "r") as file:
-                print("Yay file found and opened all working ")
                     #content = file.read() #Prints entire contents of file
                 lines = file.readlines()
-                print(lines[0]) 
-                                  
-        except FileNotFoundError:             
+                print(f"supported characters: {lines[0]}")
+                break
+        except FileNotFoundError:            
             print("File not found; Try again")
             file_name = input("File name")
-    
-    
-
-#MAIN-------------------------------------------------------------------------------------------
-#reset_file()
-
+    supported_characters = lines[0].strip()
+    shift = int(lines[1].strip())
+    messages = lines[-2:]
+    for message in messages[-2:]: #rints last two messages
+        decrypted = encrypt(message.strip(), supported_characters, -shift)
+        print(decrypted)
+    reply = input("Enter your reply: ")
+    encrypted_reply = encrypt(reply, supported_characters, shift)
+    with open(f"Encrypted_stuff/{file_name}.txt", "a") as file:
+        file.write(encrypted_reply + "\n")
+#MAIN----------------------------------------------------------------------------------------------
 def main():
     while True:
         print_start()
         start_input = get_valid_start_input()
         if start_input == 3:
-            print("Im done")
+            print("Goodbye")
             break
         elif start_input == 1:
-            shift = get_digit("Enter Shift" )
-            result = start_crypt(shift)
-            create_message(f"\n {result}")
+            create_message()
         else:
             reply2message()
-            decrypt()
 main()
 
-#
-
-# if input == 1 then it needs to ask for alphabet and such 
-
-
-
+#ABCDEFGHIJKLMNOPQRSTUVWXYZ 
